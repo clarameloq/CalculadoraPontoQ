@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#DCEEFB">
+<title>Ponto Q</title>
+<style>
+:root{
+  --bg:#EAF4FC; --surface:#F7FBFF; --line:#C6DFF3; --accent:#8EC5F0; --accent2:#BFE0F8;
+  --ink:#16324A; --muted:#55738C; --warn:#B3501A; --ok:#1F6B4A;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.5}
+.wrap{max-width:560px;margin:0 auto;padding:16px 16px 40px}
+h1{font-size:26px;margin:4px 0 2px}
+h2{font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.sub{color:var(--muted);margin:0 0 14px;font-size:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+label{display:block;font-weight:600;font-size:14px;margin-bottom:4px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.full{grid-column:1/-1}
+.ctl{display:flex;border:1px solid var(--line);border-radius:10px;background:#fff;overflow:hidden}
+.ctl:focus-within{border-color:var(--ink)}
+.ctl input{flex:1;min-width:0;border:0;padding:10px;font:inherit;background:transparent}
+.ctl input:focus{outline:none}
+.ctl select,.ctl span{border:0;border-left:1px solid var(--line);background:var(--accent2);padding:0 8px;font:inherit;display:flex;align-items:center}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg button{border:1px solid var(--accent);background:transparent;color:var(--ink);border-radius:10px;padding:10px;font:inherit;font-weight:600;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent)}
+.err{color:var(--warn);font-size:12px;min-height:0}
+.reads{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.read{background:var(--accent2);border-radius:10px;padding:8px 10px}
+.read .k{font-size:12px;color:var(--muted)}
+.read .v{font-weight:700;font-size:17px;white-space:nowrap}
+.region{margin:12px 0 0;font-weight:700}
+.region.ativa{color:var(--ok)} .region.sat,.region.corte{color:var(--warn)}
+.step{padding:10px 0;border-top:1px solid var(--line)}
+.step:first-child{border-top:0;padding-top:0}
+.step b{display:block}
+.step .why{color:var(--muted);font-size:14px}
+.step .eq{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:14px;overflow-x:auto;white-space:nowrap}
+.step .res{font-weight:700}
+.warnbox{border-left:4px solid var(--warn);padding-left:10px;color:var(--warn);font-size:14px;margin-top:8px}
+svg{width:100%;height:auto;display:block}
+svg text{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;fill:var(--muted)}
+button.link{background:none;border:0;color:var(--ink);text-decoration:underline;font:inherit;cursor:pointer;padding:0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Ponto Q</h1>
+  <p class="sub">Transistor NPN. Digite os valores do circuito e veja o ponto Q com o passo a passo. Aceita vírgula e notação como 3k9.</p>
+
+  <div class="panel">
+    <h2>Circuito</h2>
+    <div class="seg" id="circ">
+      <button type="button" data-c="div" aria-pressed="true">Divisor de tensão</button>
+      <button type="button" data-c="base" aria-pressed="false">Resistor na base</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Valores</h2>
+    <div class="fields">
+      <div><label for="vcc">V<sub>CC</sub></label><div class="ctl"><input id="vcc" inputmode="decimal" value="10"><span>V</span></div><div class="err" id="vccE"></div></div>
+      <div><label for="vbe">V<sub>BE</sub></label><div class="ctl"><input id="vbe" inputmode="decimal" value="0,7"><span>V</span></div><div class="err" id="vbeE"></div></div>
+      <div data-for="div"><label for="r1">R<sub>1</sub></label><div class="ctl"><input id="r1" inputmode="decimal" value="10"><select id="r1u"><option value="1">Ω</option><option value="1000" selected>kΩ</option><option value="1000000">MΩ</option></select></div><div class="err" id="r1E"></div></div>
+      <div data-for="div"><label for="r2">R<sub>2</sub></label><div class="ctl"><input id="r2" inputmode="decimal" value="2,2"><select id="r2u"><option value="1">Ω</option><option value="1000" selected>kΩ</option><option value="1000000">MΩ</option></select></div><div class="err" id="r2E"></div></div>
+      <div data-for="base" hidden><label for="rb">R<sub>B</sub> (base)</label><div class="ctl"><input id="rb" inputmode="decimal" value="15"><select id="rbu"><option value="1">Ω</option><option value="1000" selected>kΩ</option><option value="1000000">MΩ</option></select></div><div class="err" id="rbE"></div></div>
+      <div><label for="rc">R<sub>C</sub></label><div class="ctl"><input id="rc" inputmode="decimal" value="3,6"><select id="rcu"><option value="1">Ω</option><option value="1000" selected>kΩ</option><option value="1000000">MΩ</option></select></div><div class="err" id="rcE"></div></div>
+      <div data-for="div"><label for="re">R<sub>E</sub></label><div class="ctl"><input id="re" inputmode="decimal" value="1"><select id="reu"><option value="1">Ω</option><option value="1000" selected>kΩ</option><option value="1000000">MΩ</option></select></div><div class="err" id="reE"></div></div>
+      <div data-for="base" hidden><label for="beta">β</label><div class="ctl"><input id="beta" inputmode="decimal" value="100"></div><div class="err" id="betaE"></div></div>
+      <div class="full" data-for="div"><label>Análise</label>
+        <div class="seg" id="meth">
+          <button type="button" data-m="aprox" aria-pressed="true">Aproximada (I<sub>B</sub> desprezada)</button>
+          <button type="button" data-m="exata" aria-pressed="false">Exata (com β)</button>
+        </div>
+      </div>
+      <div data-for="exata" hidden><label for="betaX">β</label><div class="ctl"><input id="betaX" inputmode="decimal" value="100"></div><div class="err" id="betaXE"></div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Resultado</h2>
+    <div class="reads" id="reads"></div>
+    <p class="region" id="region"></p>
+  </div>
+
+  <div class="panel">
+    <h2>Passo a passo</h2>
+    <div id="steps"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Reta de carga</h2>
+    <svg id="ll" viewBox="0 0 360 240" role="img" aria-label="Reta de carga com o ponto Q"></svg>
+    <p class="sub" id="llcap" style="margin:8px 0 0"></p>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var VCESAT=0.2, circ="div", meth="aprox";
+  function $(id){return document.getElementById(id);}
+
+  /* ---------- números ---------- */
+  function parseNum(raw){
+    var s=String(raw||"").trim().replace(/\s+/g,"");
+    if(!s)return null;
+    var m=s.match(/^(\d+)([kKM])(\d+)$/),mult=1;
+    if(m){s=m[1]+"."+m[3];mult=m[2]==="M"?1e6:1e3;}
+    else{var l=s.slice(-1);if(/[kKM]/.test(l)){mult=l==="M"?1e6:1e3;s=s.slice(0,-1);}}
+    s=s.replace(",",".");
+    if(!/^(\d+(\.\d*)?|\.\d+)$/.test(s))return NaN;
+    return {v:parseFloat(s),suf:mult!==1,mult:mult};
+  }
+  function get(id,unit){
+    var p=parseNum($(id).value);
+    if(p===null)return {e:"Preencha este campo."};
+    if(p!==p||p.v===undefined)return {e:"Número inválido. Ex.: 3,9 ou 3k9."};
+    var v=p.v; if(p.suf)v*=p.mult; else if(unit)v*=parseFloat($(unit).value);
+    return {v:v};
+  }
+  function n(x,sig){
+    sig=sig||4; if(!isFinite(x))return "—"; if(Math.abs(x)<1e-15)return "0";
+    return String(parseFloat(x.toPrecision(sig))).replace(".",",").replace("-","−");
+  }
+  function V(x){return n(x)+" V";}
+  function I(x){var a=Math.abs(x);if(a===0)return "0 A";if(a>=1)return n(x)+" A";if(a>=1e-4)return n(x*1e3)+" mA";return n(x*1e6)+" µA";}
+  function R(x){var a=Math.abs(x);if(a>=1e6)return n(x/1e6)+" MΩ";if(a>=1e3)return n(x/1e3)+" kΩ";return n(x)+" Ω";}
+
+  /* ---------- leitura ---------- */
+  function read(){
+    var spec=[["vcc",null,function(v){return v>0}],["vbe",null,function(v){return v>=0&&v<=2}],["rc","rcu",function(v){return v>=0}]];
+    if(circ==="div"){
+      spec.push(["r1","r1u",function(v){return v>0}],["r2","r2u",function(v){return v>0}],["re","reu",function(v){return v>0}]);
+      if(meth==="exata")spec.push(["betaX",null,function(v){return v>=1}]);
+    }else{
+      spec.push(["rb","rbu",function(v){return v>0}],["beta",null,function(v){return v>=1}]);
+    }
+    var all=["vcc","vbe","rc","r1","r2","re","rb","beta","betaX"];
+    all.forEach(function(k){var e=$(k+"E");if(e)e.textContent="";});
+    var r={},ok=true;
+    spec.forEach(function(s){
+      var g=get(s[0],s[1]);
+      if(g.e){$(s[0]+"E").textContent=g.e;ok=false;}
+      else if(!s[2](g.v)){$(s[0]+"E").textContent="Valor fora do permitido.";ok=false;}
+      else r[s[0]]=g.v;
+    });
+    return ok?r:null;
+  }
+
+  /* ---------- cálculo + passos ---------- */
+  function st(title,why,eqs,res){return {t:title,why:why,eqs:eqs||[],res:res||[]};}
+
+  function calcDiv(p){
+    var S=[],f={};
+    var VB,VE,IE,IC,VC,VCE,beta=p.betaX;
+    if(meth==="aprox"){
+      VB=p.r2*p.vcc/(p.r1+p.r2);
+      S.push(st("Tensão na base","Divisor de tensão, desprezando a corrente da base.",
+        ["VB = R2 · VCC / (R1 + R2)","VB = "+R(p.r2)+" · "+V(p.vcc)+" / ("+R(p.r1)+" + "+R(p.r2)+")"],["VB = "+V(VB)]));
+      VE=VB-p.vbe;
+      S.push(st("Tensão no emissor","A base fica VBE acima do emissor.",["VE = VB − VBE","VE = "+V(VB)+" − "+V(p.vbe)],["VE = "+V(VE)]));
+      if(VE<=0){f.region="corte";f.IE=0;f.IC=0;f.VE=0;f.VB=VB;f.VC=p.vcc;f.VCE=p.vcc;
+        S.push({t:"Transistor em corte",why:"VB não passa de VBE, a junção base-emissor não conduz. IC = 0 e VCE = VCC.",eqs:[],res:["VCE = "+V(p.vcc)],warn:true});
+        return {S:S,f:f};}
+      IE=VE/p.re;
+      S.push(st("Corrente no emissor","Lei de Ohm em RE.",["IE = VE / RE","IE = "+V(VE)+" / "+R(p.re)],["IE = "+I(IE)]));
+      IC=IE;
+      S.push(st("Corrente no coletor","IC ≅ IE (β grande).",[],["IC = IE = "+I(IC)]));
+      VC=p.vcc-p.rc*IC;
+      S.push(st("Tensão no coletor","","VC = VCC − RC · IC".split("|").concat(["VC = "+V(p.vcc)+" − "+R(p.rc)+" · "+I(IC)]),["VC = "+V(VC)]));
+      VCE=VC-VE;
+      S.push(st("Tensão coletor-emissor","","VCE = VC − VE".split("|").concat(["VCE = "+V(VC)+" − "+V(VE)]),["VCE = "+V(VCE)]));
+    }else{
+      var Rth=p.r1*p.r2/(p.r1+p.r2),Eth=p.r2*p.vcc/(p.r1+p.r2);
+      S.push(st("Resistência de Thévenin","R1 em paralelo com R2.",["RTh = R1 · R2 / (R1 + R2)","RTh = "+R(p.r1)+" · "+R(p.r2)+" / ("+R(p.r1)+" + "+R(p.r2)+")"],["RTh = "+R(Rth)]));
+      S.push(st("Tensão de Thévenin","Divisor com a base desconectada.",["ETh = R2 · VCC / (R1 + R2)"],["ETh = "+V(Eth)]));
+      var IB=(Eth-p.vbe)/(Rth+(beta+1)*p.re);
+      S.push(st("Corrente na base","Malha base-emissor com IE = (β+1)·IB.",["IB = (ETh − VBE) / (RTh + (β+1)·RE)","IB = ("+V(Eth)+" − "+V(p.vbe)+") / ("+R(Rth)+" + ("+n(beta)+"+1)·"+R(p.re)+")"],["IB = "+I(IB)]));
+      if(IB<=0){f.region="corte";f.IE=0;f.IC=0;f.VE=0;f.VB=Eth;f.VC=p.vcc;f.VCE=p.vcc;
+        S.push({t:"Transistor em corte",why:"IB ≤ 0: sem corrente. IC = 0 e VCE = VCC.",eqs:[],res:["VCE = "+V(p.vcc)],warn:true});
+        return {S:S,f:f};}
+      IC=beta*IB;IE=(beta+1)*IB;VE=IE*p.re;VB=VE+p.vbe;VC=p.vcc-IC*p.rc;VCE=VC-VE;
+      S.push(st("Correntes IC e IE","","IC = β · IB|IE = (β+1) · IB".split("|"),["IC = "+I(IC),"IE = "+I(IE)]));
+      S.push(st("Tensões no emissor e na base","",["VE = IE · RE","VB = VE + VBE"],["VE = "+V(VE),"VB = "+V(VB)]));
+      S.push(st("Tensão no coletor","",["VC = VCC − RC · IC"],["VC = "+V(VC)]));
+      S.push(st("Tensão coletor-emissor","",["VCE = VC − VE"],["VCE = "+V(VCE)]));
+    }
+    f.VB=VB;f.VE=VE;f.IE=IE;f.IC=IC;f.VC=VC;f.VCE=VCE;f.region="ativa";
+    if(VCE<=VCESAT){
+      f.region="sat";f.IC=(p.vcc-VCESAT)/(p.rc+p.re);f.VCE=VCESAT;f.IE=f.IC;
+      S.push({t:"Transistor saturado",why:"VCE ficou abaixo de ~0,2 V. Na prática VCE ≈ 0,2 V e IC = (VCC − 0,2) / (RC + RE) = "+I(f.IC)+".",eqs:[],res:[],warn:true});
+    }
+    return {S:S,f:f};
+  }
+
+  function calcBase(p){
+    var S=[],f={};
+    var IB=(p.vcc-p.vbe)/p.rb;
+    S.push(st("Corrente na base","",["IB = (VCC − VBE) / RB","IB = ("+V(p.vcc)+" − "+V(p.vbe)+") / "+R(p.rb)],["IB = "+I(IB)]));
+    var IC=p.beta*IB;
+    S.push(st("Corrente no coletor","Se o transistor estiver na região ativa.",["IC = β · IB","IC = "+n(p.beta)+" · "+I(IB)],["IC = "+I(IC)]));
+    var ICmax=p.rc>0?p.vcc/p.rc:Infinity;
+    S.push(st("Corrente máxima","Quando VCE = 0.",["IC(máx) = VCC / RC","IC(máx) = "+V(p.vcc)+" / "+R(p.rc)],["IC(máx) = "+I(ICmax)]));
+    f.VB=p.vbe;f.VE=0;
+    if(IC>=ICmax-1e-12&&p.rc>0){
+      f.region="sat";f.IC=(p.vcc-VCESAT)/p.rc;f.VCE=VCESAT;f.VC=VCESAT;f.IE=f.IC;
+      S.push({t:"Transistor saturado",why:"β·IB ("+I(IC)+") passa de IC(máx) ("+I(ICmax)+"). O transistor satura: IC ≈ "+I(f.IC)+" e VCE ≈ 0,2 V.",eqs:[],res:[],warn:true});
+    }else{
+      f.region="ativa";f.IC=IC;f.IE=IC;f.VC=p.vcc-p.rc*IC;f.VCE=f.VC;
+      S.push(st("Tensão coletor-emissor","O emissor está no terra.",["VCE = VCC − RC · IC","VCE = "+V(p.vcc)+" − "+R(p.rc)+" · "+I(IC)],["VCE = "+V(f.VCE)]));
+    }
+    f.ICsat=ICmax;
+    return {S:S,f:f};
+  }
+
+  /* ---------- exibição ---------- */
+  var REG={ativa:"Região ativa",sat:"Saturação",corte:"Corte"};
+  function render(){
+    var p=read(),reads=$("reads");
+    if(!p){reads.innerHTML="";$("region").textContent="Corrija os campos indicados.";$("region").className="region sat";
+      $("steps").innerHTML="";$("ll").innerHTML="";$("llcap").textContent="";return;}
+    var out=circ==="div"?calcDiv(p):calcBase(p),f=out.f;
+    var items=[["VB",V(f.VB)],["VE",V(f.VE)],["VC",V(f.VC)],["IC",I(f.IC)],["IE",I(f.IE)],["VCE",V(f.VCE)]];
+    if(circ==="base")items=[["IB",I((p.vcc-p.vbe)/p.rb)],["IC",I(f.IC)],["VCE",V(f.VCE)]];
+    reads.innerHTML=items.map(function(i){return '<div class="read"><div class="k">'+i[0]+'</div><div class="v">'+i[1]+'</div></div>';}).join("");
+    $("region").className="region "+f.region;
+    $("region").textContent="Ponto Q: VCEQ = "+V(f.VCE)+" ; ICQ = "+I(f.IC)+" · "+REG[f.region];
+    var k=0;
+    $("steps").innerHTML=out.S.map(function(s){
+      var h='<div class="step"><b>'+(s.warn?"Aviso: ":(++k)+". ")+s.t+'</b>';
+      if(s.why)h+='<div class="why'+(s.warn?" warnbox":"")+'">'+s.why+'</div>';
+      s.eqs.forEach(function(e){h+='<div class="eq">'+e+'</div>';});
+      s.res.forEach(function(e){h+='<div class="eq res">'+e+'</div>';});
+      return h+'</div>';
+    }).join("");
+    drawLL(p,f);
+  }
+
+  function nice(max){var raw=max/5,mag=Math.pow(10,Math.floor(Math.log10(raw))),f=raw/mag;return (f<=1?1:f<=2?2:f<=5?5:10)*mag;}
+  function drawLL(p,f){
+    var Icsat=p.vcc/(p.rc+(circ==="div"?p.re:0));
+    if(!isFinite(Icsat)||Icsat<=0){$("ll").innerHTML="";return;}
+    var W=360,H=240,L=48,Rr=14,T=16,B=36,pw=W-L-Rr,ph=H-T-B;
+    var ys=1e3,yu="mA";if(Icsat>=1){ys=1;yu="A";}else if(Icsat<1e-4){ys=1e6;yu="µA";}
+    var xs=nice(p.vcc),xMax=Math.ceil(p.vcc/xs-1e-9)*xs;
+    var yt=Icsat*ys,yst=nice(yt),yMax=Math.ceil(yt/yst-1e-9)*yst;
+    function X(v){return L+v/xMax*pw;} function Y(i){return T+ph-(i*ys)/yMax*ph;}
+    var s="",k;
+    for(k=0;k<=Math.round(xMax/xs);k++){var x=X(k*xs).toFixed(1);s+='<line x1="'+x+'" y1="'+T+'" x2="'+x+'" y2="'+(T+ph)+'" stroke="#C6DFF3"/><text x="'+x+'" y="'+(T+ph+14)+'" text-anchor="middle">'+n(k*xs)+'</text>';}
+    for(k=0;k<=Math.round(yMax/yst);k++){var y=(T+ph-k*yst/yMax*ph).toFixed(1);s+='<line x1="'+L+'" y1="'+y+'" x2="'+(L+pw)+'" y2="'+y+'" stroke="#C6DFF3"/><text x="'+(L-5)+'" y="'+(+y+4)+'" text-anchor="end">'+n(k*yst)+'</text>';}
+    s+='<line x1="'+L+'" y1="'+T+'" x2="'+L+'" y2="'+(T+ph)+'" stroke="#16324A"/><line x1="'+L+'" y1="'+(T+ph)+'" x2="'+(L+pw)+'" y2="'+(T+ph)+'" stroke="#16324A"/>';
+    s+='<text x="'+(L+pw)+'" y="'+(H-4)+'" text-anchor="end">VCE (V)</text><text x="4" y="11">IC ('+yu+')</text>';
+    s+='<line x1="'+X(0)+'" y1="'+Y(Icsat)+'" x2="'+X(p.vcc)+'" y2="'+Y(0)+'" stroke="#16324A" stroke-width="2"/>';
+    var qx=X(Math.max(0,Math.min(f.VCE,xMax))),qy=Y(Math.max(0,Math.min(f.IC,yMax/ys)));
+    s+='<line x1="'+qx+'" y1="'+qy+'" x2="'+qx+'" y2="'+(T+ph)+'" stroke="#55738C" stroke-dasharray="3 3"/><line x1="'+L+'" y1="'+qy+'" x2="'+qx+'" y2="'+qy+'" stroke="#55738C" stroke-dasharray="3 3"/>';
+    s+='<circle cx="'+qx+'" cy="'+qy+'" r="6" fill="#8EC5F0" stroke="#16324A" stroke-width="2"/><text x="'+(qx+9)+'" y="'+(qy-8)+'" style="fill:#16324A;font-weight:700;font-size:13px">Q</text>';
+    $("ll").innerHTML=s;
+    $("llcap").textContent="Extremos da reta: IC(sat) = "+I(Icsat)+" e VCE(corte) = "+V(p.vcc)+".";
+  }
+
+  /* ---------- eventos ---------- */
+  function layout(){
+    document.querySelectorAll("[data-for]").forEach(function(e){
+      var w=e.getAttribute("data-for"),show=w==="exata"?(circ==="div"&&meth==="exata"):w===circ;
+      e.hidden=!show;
+    });
+    document.querySelectorAll("#circ button").forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.c===circ));});
+    document.querySelectorAll("#meth button").forEach(function(b){b.setAttribute("aria-pressed",String(b.dataset.m===meth));});
+  }
+  document.querySelectorAll("#circ button").forEach(function(b){b.onclick=function(){circ=b.dataset.c;layout();render();};});
+  document.querySelectorAll("#meth button").forEach(function(b){b.onclick=function(){meth=b.dataset.m;layout();render();};});
+  document.querySelectorAll("input").forEach(function(i){i.addEventListener("input",render);});
+  document.querySelectorAll("select").forEach(function(s){s.addEventListener("change",render);});
+  layout();render();
+})();
+</script>
+</body>
+</html>
